@@ -32,7 +32,7 @@ You need:
 Run this on the ComputerCraft computer:
 
 ```sh
-wget run https://raw.githubusercontent.com/kami-tsuki/cc-animator/main/install.lua
+wget run https://raw.githubusercontent.com/kami-tsuki/cc-animator/master/install.lua
 ```
 
 The installer will:

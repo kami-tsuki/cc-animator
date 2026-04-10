@@ -2,7 +2,7 @@
   "Tablet name": "Kami-Animator",
   "version": "2.0.0",
   "repo": "kami-tsuki/cc-animator",
-  "branch": "main",
+  "branch": "master",
   "files": [
     "animated_monitor.lua",
     "startup.lua",
