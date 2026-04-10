@@ -1,0 +1,7 @@
+{
+  "label": "Vortex Tunnel",
+  "description": "A spiraling tunnel that pulls the palette into the center.",
+  "settings": {
+    "speed": 1.75
+  }
+}

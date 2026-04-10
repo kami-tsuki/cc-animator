@@ -1,0 +1,7 @@
+{
+  "label": "Pulse Lattice",
+  "description": "Pulsing energy grid with a shifting central core.",
+  "settings": {
+    "speed": 1.55
+  }
+}

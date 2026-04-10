@@ -1,0 +1,7 @@
+{
+  "label": "Circuit",
+  "description": "Motherboard traces, vias and crackling power routes.",
+  "settings": {
+    "speed": 1.18
+  }
+}

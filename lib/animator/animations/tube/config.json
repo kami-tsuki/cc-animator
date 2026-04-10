@@ -1,0 +1,7 @@
+{
+  "label": "Lightning Tube",
+  "description": "A charged conduit with layered branching arcs.",
+  "settings": {
+    "speed": 1.85
+  }
+}

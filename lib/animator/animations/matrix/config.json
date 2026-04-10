@@ -1,0 +1,7 @@
+{
+  "label": "Matrix",
+  "description": "Digital rain streams with animated glyph heads and tails.",
+  "settings": {
+    "speed": 2.2
+  }
+}

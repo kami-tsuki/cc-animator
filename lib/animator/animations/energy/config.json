@@ -1,0 +1,7 @@
+{
+  "label": "Energy Flow",
+  "description": "Layered plasma ribbons with scanning node boosts.",
+  "settings": {
+    "speed": 1.35
+  }
+}

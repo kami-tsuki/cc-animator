@@ -1,0 +1,20 @@
+{
+  "Tablet name": "Kami-Animator",
+  "version": "2.0.0",
+  "repo": "kami-tsuki/cc-animator",
+  "branch": "main",
+  "files": [
+    "animated_monitor.lua",
+    "startup.lua",
+    "update.lua",
+    "install.lua",
+    "config.json",
+    "manifest.json",
+    "lib/*"
+  ],
+  "obsolete": [],
+  "preserve": [
+    "config.json",
+    ".animated_monitor_settings"
+  ]
+}

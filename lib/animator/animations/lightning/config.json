@@ -1,0 +1,7 @@
+{
+  "label": "Storm Lightning",
+  "description": "Column-biased lightning forks with heavy storm pulses.",
+  "settings": {
+    "speed": 1.8
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "label": "Ion Beam",
+  "description": "Focused energy shafts with oscillating halo pulses.",
+  "settings": {
+    "speed": 1.9
+  }
+}

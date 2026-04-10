@@ -1,0 +1,18 @@
+{
+  "title": "Kami-Animator",
+  "version": "2.0.0",
+  "subtitle": "Modular multi-monitor animation wall",
+  "preferredScale": 0.5,
+  "minFps": 8,
+  "maxFps": 18,
+  "defaultAnimation": "energy",
+  "defaultTheme": "neon",
+  "showPreviewOnBoot": false,
+  "gpu": {
+    "mode": "adaptive",
+    "defaultScale": 1,
+    "minScale": 1,
+    "maxScale": 4,
+    "targetBudgetRatio": 0.85
+  }
+}

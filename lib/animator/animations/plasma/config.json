@@ -1,0 +1,7 @@
+{
+  "label": "Plasma Drift",
+  "description": "Soft plasma fields folding into a glowing tunnel core.",
+  "settings": {
+    "speed": 1.25
+  }
+}
