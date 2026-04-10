@@ -1,6 +1,6 @@
 {
   "Tablet name": "Kami-Animator",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "repo": "kami-tsuki/cc-animator",
   "branch": "master",
   "files": [
@@ -10,6 +10,7 @@
     "install.lua",
     "config.json",
     "manifest.json",
+    "LICENSE",
     "lib/*"
   ],
   "obsolete": [

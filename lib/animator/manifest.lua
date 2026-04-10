@@ -46,6 +46,29 @@ local function normalizeStringList(items)
     return normalized, lookup
 end
 
+local function parseOptionalStringList(value)
+    if type(value) == "string" then
+        local trimmed = util.trim(value)
+        return trimmed ~= "" and { trimmed } or {}
+    end
+
+    if type(value) ~= "table" then
+        return {}
+    end
+
+    local items = {}
+    local seen = {}
+    for _, item in ipairs(value) do
+        local trimmed = util.trim(item)
+        if trimmed ~= "" and not seen[trimmed] then
+            seen[trimmed] = true
+            items[#items + 1] = trimmed
+        end
+    end
+
+    return items
+end
+
 local function matchesPath(path, values, lookup)
     path = tostring(path or "")
     if path == "" then
@@ -184,6 +207,9 @@ function M.normalize(parsed, defaults)
         version = version,
         repo = repo,
         branch = branch,
+        author = parseOptionalStringList(parsed.author or parsed.authors),
+        credits = parseOptionalStringList(parsed.credits),
+        license = util.trim(parsed.license or ""),
         files = files,
         obsolete = obsolete,
         preserve = preserve,

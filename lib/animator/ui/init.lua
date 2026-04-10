@@ -3,8 +3,8 @@ local util = require("animator.util")
 
 local M = {}
 
-function M.clear(state)
-    term.setBackgroundColor(colors.black)
+function M.clear(state, background)
+    term.setBackgroundColor(background or colors.black)
     term.setTextColor(colors.white)
     term.clear()
     state.uiButtons = {}
@@ -37,8 +37,61 @@ function M.panelCenter(y, text, color, background)
     term.write(text)
 end
 
+function M.writeAt(x, y, text, color, background)
+    local tw, th = term.getSize()
+    if y < 1 or y > th or x > tw then
+        return
+    end
+
+    x = math.max(1, x)
+    term.setCursorPos(x, y)
+    term.setBackgroundColor(background or colors.black)
+    term.setTextColor(color or colors.white)
+    term.write(util.fitTextWidth(tostring(text or ""), tw - x + 1))
+end
+
+function M.writeRight(y, text, color, background, padding)
+    local tw = term.getSize()
+    text = tostring(text or "")
+    local x = math.max(1, tw - util.textWidth(text) - (padding or 0) + 1)
+    M.writeAt(x, y, text, color, background)
+end
+
+function M.writeWrapped(x, y, width, text, color, background, maxLines)
+    local lineCount = 0
+    for _, line in ipairs(util.wrapText(text or "", math.max(1, width))) do
+        if maxLines and lineCount >= maxLines then
+            break
+        end
+        M.writeAt(x, y + lineCount, line, color, background)
+        lineCount = lineCount + 1
+    end
+    return lineCount
+end
+
 function M.writeKeyValue(y, label, value, color)
     M.panelWrite(y, string.format("%-10s %s", tostring(label or "") .. ":", tostring(value or "")), color or colors.white)
+end
+
+function M.fillRect(x, y, width, height, background)
+    if width <= 0 or height <= 0 then
+        return
+    end
+    paintutils.drawFilledBox(x, y, x + width - 1, y + height - 1, background or colors.black)
+end
+
+function M.drawFrame(x, y, width, height, border, background, title, titleColor)
+    if width <= 1 or height <= 1 then
+        return
+    end
+
+    M.fillRect(x, y, width, height, background or colors.black)
+    paintutils.drawBox(x, y, x + width - 1, y + height - 1, border or colors.gray)
+
+    if title and title ~= "" and width > 4 then
+        local header = " " .. util.fitTextWidth(tostring(title), width - 4) .. " "
+        M.writeAt(x + 2, y, header, titleColor or colors.white, background or colors.black)
+    end
 end
 
 function M.addButton(state, x, y, width, label, background, foreground, action)
@@ -78,7 +131,7 @@ end
 
 function M.visibleListCount()
     local _, th = term.getSize()
-    return math.max(4, math.min(8, th - 11))
+    return math.max(4, math.min(8, th - 13))
 end
 
 function M.getMonitorLetter(index)
@@ -90,21 +143,20 @@ function M.drawStatusBar(state, message)
         state.statusMessage = tostring(message)
     end
 
-    if not state.statusMessage or state.statusMessage == "" then
-        return
+    local _, th = term.getSize()
+    local text = state.statusMessage
+    if not text or text == "" then
+        text = "Ready • Q quit • R rescan • Tab select monitor"
     end
 
-    local _, th = term.getSize()
-    M.panelWrite(th, state.statusMessage, colors.lightGray)
+    M.panelWrite(th, " " .. text, colors.white, colors.gray)
 end
 
 function M.drawMiniMap(state, originX, originY, mapWidth, mapHeight)
-    paintutils.drawBox(originX, originY, originX + mapWidth - 1, originY + mapHeight - 1, colors.lightGray)
+    M.drawFrame(originX, originY, mapWidth, mapHeight, colors.lightBlue, colors.black)
 
     if #(state.monitorTiles or {}) == 0 then
-        term.setCursorPos(originX + 2, originY + 2)
-        term.setTextColor(colors.gray)
-        term.write("No monitors")
+        M.writeAt(originX + 2, originY + 2, "No monitors", colors.gray)
         return
     end
 
@@ -132,14 +184,9 @@ function M.drawMiniMap(state, originX, originY, mapWidth, mapHeight)
         local ey = math.min(originY + mapHeight - 2, sy + sh - 1)
         local active = index == state.selectedMonitorIndex
 
-        paintutils.drawFilledBox(sx, sy, ex, ey, active and colors.lightBlue or colors.gray)
+        paintutils.drawFilledBox(sx, sy, ex, ey, active and colors.cyan or colors.gray)
         paintutils.drawBox(sx, sy, ex, ey, active and colors.white or colors.lightGray)
-
-        term.setCursorPos(math.min(ex, sx + 1), math.floor((sy + ey) / 2))
-        term.setBackgroundColor(active and colors.lightBlue or colors.gray)
-        term.setTextColor(active and colors.black or colors.white)
-        term.write(tile.label or M.getMonitorLetter(index))
-        term.setBackgroundColor(colors.black)
+        M.writeAt(math.min(ex, sx + 1), math.floor((sy + ey) / 2), tile.label or M.getMonitorLetter(index), active and colors.black or colors.white, active and colors.cyan or colors.gray)
     end
 end
 

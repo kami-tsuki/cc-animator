@@ -1,12 +1,17 @@
 ---@diagnostic disable: undefined-global
 local M = {}
 
+local RUNTIME_PATH_FILE = ".cc-animator.runtime_path"
 local ROM_MODULE_ROOTS = {
     "rom/modules/main",
     "rom/modules/turtle",
     "rom/modules/command",
     "rom/modules/pocket"
 }
+
+local function trim(value)
+    return (tostring(value or ""):gsub("^%s+", ""):gsub("%s+$", ""))
+end
 
 local function currentBaseDir()
     if shell and shell.getRunningProgram then
@@ -23,15 +28,55 @@ local function currentBaseDir()
     return ""
 end
 
-local function modulePaths(baseDir, moduleName)
+local function readRuntimeBaseDir(baseDir)
+    local pointerPath = fs.combine(baseDir, RUNTIME_PATH_FILE)
+    if not fs.exists(pointerPath) or fs.isDir(pointerPath) then
+        return nil
+    end
+
+    local handle = fs.open(pointerPath, "r")
+    if not handle then
+        return nil
+    end
+
+    local runtimeDir = trim(handle.readAll())
+    handle.close()
+
+    if runtimeDir == "" then
+        return nil
+    end
+
+    if runtimeDir:sub(1, 1) ~= "/" then
+        runtimeDir = fs.combine(baseDir, runtimeDir)
+    end
+
+    if fs.exists(runtimeDir) and fs.isDir(runtimeDir) then
+        return runtimeDir
+    end
+
+    return nil
+end
+
+local function appendModuleCandidates(candidates, rootDir, relativePath)
+    if not rootDir or rootDir == "" then
+        return
+    end
+
+    candidates[#candidates + 1] = fs.combine(rootDir, relativePath)
+    candidates[#candidates + 1] = fs.combine(rootDir, relativePath .. ".lua")
+    candidates[#candidates + 1] = fs.combine(rootDir, fs.combine(relativePath, "init.lua"))
+    candidates[#candidates + 1] = fs.combine(rootDir, fs.combine("lib", relativePath .. ".lua"))
+    candidates[#candidates + 1] = fs.combine(rootDir, fs.combine("lib", fs.combine(relativePath, "init.lua")))
+end
+
+local function modulePaths(baseDir, moduleName, runtimeBaseDir)
     local relativePath = moduleName:gsub("%.", "/")
-    local candidates = {
-        fs.combine(baseDir, relativePath),
-        fs.combine(baseDir, relativePath .. ".lua"),
-        fs.combine(baseDir, fs.combine(relativePath, "init.lua")),
-        fs.combine(baseDir, fs.combine("lib", relativePath .. ".lua")),
-        fs.combine(baseDir, fs.combine("lib", fs.combine(relativePath, "init.lua")))
-    }
+    local candidates = {}
+
+    appendModuleCandidates(candidates, runtimeBaseDir, relativePath)
+    if runtimeBaseDir ~= baseDir then
+        appendModuleCandidates(candidates, baseDir, relativePath)
+    end
 
     for _, root in ipairs(ROM_MODULE_ROOTS) do
         candidates[#candidates + 1] = fs.combine(root, relativePath)
@@ -42,8 +87,8 @@ local function modulePaths(baseDir, moduleName)
     return candidates
 end
 
-local function resolveModulePath(baseDir, moduleName)
-    for _, path in ipairs(modulePaths(baseDir, moduleName)) do
+local function resolveModulePath(baseDir, moduleName, runtimeBaseDir)
+    for _, path in ipairs(modulePaths(baseDir, moduleName, runtimeBaseDir)) do
         if fs.exists(path) and not fs.isDir(path) then
             return path
         end
@@ -52,7 +97,7 @@ local function resolveModulePath(baseDir, moduleName)
     return nil
 end
 
-local function createRequire(baseDir, nativeRequire)
+local function createRequire(baseDir, runtimeBaseDir, nativeRequire)
     local cache = {}
     local loading = {}
 
@@ -73,7 +118,7 @@ local function createRequire(baseDir, nativeRequire)
             error("Circular module load detected for '" .. moduleName .. "'.")
         end
 
-        local path = resolveModulePath(baseDir, moduleName)
+        local path = resolveModulePath(baseDir, moduleName, runtimeBaseDir)
         if not path then
             error("Module file not found for '" .. moduleName .. "'.")
         end
@@ -104,8 +149,9 @@ end
 
 function M.run(moduleName, ...)
     local baseDir = currentBaseDir()
+    local runtimeBaseDir = readRuntimeBaseDir(baseDir) or baseDir
     local nativeRequire = rawget(_G, "require")
-    local customRequire = createRequire(baseDir, nativeRequire)
+    local customRequire = createRequire(baseDir, runtimeBaseDir, nativeRequire)
     _G.require = customRequire
 
     local entry = customRequire(moduleName)

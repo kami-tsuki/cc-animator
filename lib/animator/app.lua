@@ -1,9 +1,11 @@
 ---@diagnostic disable: undefined-global, undefined-field
 local animations = require("animator.animations")
 local config = require("animator.config")
+local manifestModel = require("animator.manifest")
 local renderer = require("animator.render")
 local screens = require("animator.ui.screens")
 local ui = require("animator.ui")
+local updater = require("animator.updater")
 local themes = require("animator.themes")
 local util = require("animator.util")
 
@@ -81,6 +83,25 @@ local function syncPerformanceSettings(state)
     state.performance.renderScale = util.clamp(state.runtimeSettings.gpuScale or state.performance.renderScale or 1, minScale, maxScale)
 end
 
+local function loadDisplayMeta(appConfig)
+    local meta = manifestModel.load() or {}
+    local authors = type(meta.author) == "table" and meta.author or {}
+    local credits = type(meta.credits) == "table" and meta.credits or {}
+
+    if #authors == 0 then
+        authors = { "tsuki_kami_" }
+    end
+
+    return {
+        tabletName = util.trim(meta.tabletName or appConfig.title or "Kami-Animator"),
+        version = util.trim(meta.version or appConfig.version or "0.0.0"),
+        subtitle = util.trim(appConfig.subtitle or "Modular multi-monitor animation wall"),
+        author = authors,
+        credits = credits,
+        license = util.trim(meta.license or ""),
+    }
+end
+
 local function makeState(requestedMonitors)
     local appConfig = config.loadGeneral()
     local saved = config.loadRuntime()
@@ -88,9 +109,14 @@ local function makeState(requestedMonitors)
 
     local selectedAnimation = (saved.animation and animations.all[saved.animation]) and saved.animation or appConfig.defaultAnimation
     local selectedTheme = (saved.theme and themes.all[saved.theme]) and saved.theme or appConfig.defaultTheme
+    local localBaseDir = util.baseDir()
+    local runtimePath = (updater.readRuntimePath and updater.readRuntimePath(localBaseDir)) or localBaseDir
 
     local state = {
         config = appConfig,
+        meta = loadDisplayMeta(appConfig),
+        localBaseDir = localBaseDir,
+        runtimePath = runtimePath,
         requestedMonitors = requestedMonitors,
         selectedAnimation = selectedAnimation,
         selectedTheme = selectedTheme,

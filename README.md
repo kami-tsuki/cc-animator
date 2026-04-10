@@ -10,9 +10,11 @@ It renders themed real-time effects from `lib/animator/animations/*`, applies pa
   - `logic.lua`
   - `config.json`
 - Theme palette system under `lib/animator/themes/*`
+- Modernized control UI with richer status panels, metadata, and an About page
 - Built-in UI for animation, theme, layout, and performance control
 - GPU-like adaptive rendering and quality scaling for larger monitor walls
 - `install.lua` / `update.lua` workflow similar to `cc-atm10-music`
+- Optional external disk/shared-storage runtime installs while keeping local launchers on the PC
 - First install fetches `manifest.json` from the repo and then installs the listed runtime files
 
 ---
@@ -39,6 +41,8 @@ The installer will:
 
 - download `manifest.json` first
 - validate the manifest and then download the runtime files
+- ask whether the runtime should stay local or be stored on a floppy/shared disk path
+- keep local launch files on the computer even when the runtime is stored externally
 - create `lib/animator/*`
 - preserve your local `config.json` if it already exists
 - preserve `.animated_monitor_settings`
@@ -83,11 +87,12 @@ update
 
 ### UI pages
 
-- **Home** — overview and renderer status
-- **Animate** — select animation module
+- **Home** — overview, runtime status, and project identity
+- **Animate** — select animation modules
 - **Themes** — switch color palettes
 - **Layout** — arrange multi-monitor walls
 - **Settings** — adjust runtime and GPU-style quality scaling
+- **About** — view author, credits, and license information
 
 ---
 
@@ -100,6 +105,7 @@ update.lua                  Update entry
 install.lua                 Installer
 manifest.json               Update manifest
 config.json                 App config
+LICENSE                     Attribution license
 lib/animator/
     app.lua
     bootstrap.lua
@@ -129,3 +135,8 @@ lib/animator/
 - Add deep animation tuning in that animation's `config.json`
 - Add color sets in `lib/animator/themes/*.lua`
 - The modular runtime under `lib/animator/*` is the only maintained code path
+
+## License / credit
+
+This project is free to use and edit.
+Edited, forked, or inspired versions should continue to mention the author `tsuki_kami_` and preserve credits where practical.
