@@ -1,21 +1,8 @@
 ---@diagnostic disable: undefined-global
 local APP_NAME = "cc-animator"
-local TABLET_NAME = "Kami-Animator"
 local REPO = "kami-tsuki/cc-animator"
 local BRANCH = "master"
 local MANIFEST_PATH = "manifest.json"
-local BOOTSTRAP_ROOT_FILES = {
-    ["animated_monitor.lua"] = true,
-    ["startup.lua"] = true,
-    ["update.lua"] = true,
-    ["install.lua"] = true,
-    ["config.json"] = true,
-    ["README.md"] = true,
-}
-local BOOTSTRAP_PRESERVE = {
-    "config.json",
-    ".animated_monitor_settings"
-}
 
 local function currentDir()
     if shell and shell.dir then

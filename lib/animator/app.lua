@@ -179,7 +179,6 @@ local function setTheme(state, id, persist)
 
     state.selectedTheme = id
     renderer.applyTheme(state, themes.get(id))
-    renderer.clearDisplayWall(state)
     renderer.rebuildLayout(state)
 
     if persist then
@@ -410,7 +409,6 @@ function M.run(...)
     math.randomseed((os.epoch and os.epoch("utc")) or os.time())
 
     local state = makeState(parseRequestedMonitors(...))
-    renderer.applyTheme(state, themes.get(state.selectedTheme))
     renderer.bindMonitors(state)
     renderer.applyTheme(state, themes.get(state.selectedTheme))
     redraw(state, "Animator ready")
@@ -423,8 +421,8 @@ function M.run(...)
         [keys.five] = "rave",
         [keys.six] = "aurora",
         [keys.seven] = "vortex",
-        [keys.eight] = "matrix",
-        [keys.nine] = "beam",
+        [keys.eight] = "dna",
+        [keys.nine] = "matrix",
         [keys.zero] = "waterfall",
     }
 

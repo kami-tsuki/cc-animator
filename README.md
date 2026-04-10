@@ -108,7 +108,7 @@ lib/animator/
     manifest.lua
     render.lua
     updater.lua
-    update_cli.lua
+    update.lua
     util.lua
     animations/
         <name>/
@@ -128,4 +128,4 @@ lib/animator/
 - Add new effects in `lib/animator/animations/<name>/logic.lua`
 - Add deep animation tuning in that animation's `config.json`
 - Add color sets in `lib/animator/themes/*.lua`
-- The original monolithic implementation is preserved as `animated_monitor_legacy.lua`
+- The modular runtime under `lib/animator/*` is the only maintained code path

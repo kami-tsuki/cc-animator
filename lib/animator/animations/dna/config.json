@@ -1,0 +1,10 @@
+{
+  "label": "DNA Helix",
+  "description": "Twin bio-electric strands with pulsing base-pair bridges and cellular glow.",
+  "settings": {
+    "speed": 1.6,
+    "twist": 1.0,
+    "bridgeDensity": 1.0,
+    "coreGlow": 1.0
+  }
+}

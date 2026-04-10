@@ -3,8 +3,7 @@ local util = require("animator.util")
 
 local M = {}
 
-local sin, cos = math.sin, math.cos
-local floor, min, max, abs = math.floor, math.min, math.max, math.abs
+local floor, min, max = math.floor, math.min, math.max
 
 local SHADE_COLORS = {
     colors.black,

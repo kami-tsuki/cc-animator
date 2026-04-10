@@ -10,6 +10,7 @@ M.order = {
     "rave",
     "aurora",
     "vortex",
+    "dna",
     "matrix",
     "circuit",
     "beam",

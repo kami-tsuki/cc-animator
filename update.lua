@@ -22,4 +22,4 @@ if not fs.exists(bootstrapPath) then
 end
 
 local bootstrap = assert(loadfile(bootstrapPath))()
-bootstrap.run("animator.update_cli")
+bootstrap.run("animator.update")
