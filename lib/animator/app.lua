@@ -5,7 +5,6 @@ local manifestModel = require("animator.manifest")
 local renderer = require("animator.render")
 local screens = require("animator.ui.screens")
 local ui = require("animator.ui")
-local updater = require("animator.updater")
 local themes = require("animator.themes")
 local util = require("animator.util")
 
@@ -109,14 +108,10 @@ local function makeState(requestedMonitors)
 
     local selectedAnimation = (saved.animation and animations.all[saved.animation]) and saved.animation or appConfig.defaultAnimation
     local selectedTheme = (saved.theme and themes.all[saved.theme]) and saved.theme or appConfig.defaultTheme
-    local localBaseDir = util.baseDir()
-    local runtimePath = (updater.readRuntimePath and updater.readRuntimePath(localBaseDir)) or localBaseDir
 
     local state = {
         config = appConfig,
         meta = loadDisplayMeta(appConfig),
-        localBaseDir = localBaseDir,
-        runtimePath = runtimePath,
         requestedMonitors = requestedMonitors,
         selectedAnimation = selectedAnimation,
         selectedTheme = selectedTheme,

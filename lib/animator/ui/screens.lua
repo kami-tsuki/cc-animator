@@ -33,14 +33,6 @@ local function joinList(values, fallback)
     return table.concat(values, ", ")
 end
 
-local function shortPath(path)
-    path = tostring(path or "")
-    if path == "" then
-        return "local"
-    end
-    return util.truncate(path, 24)
-end
-
 local function drawBoxKeyValue(x, y, width, label, value, valueColor)
     local prefix = tostring(label or "") .. ": "
     ui.writeAt(x, y, prefix, colors.lightGray)
@@ -130,7 +122,7 @@ local function drawHomePage(state, current, theme)
     drawBoxKeyValue(leftX + 2, leftY + 3, leftW - 4, "Display", (#state.monitorTiles > 0) and string.format("%d monitor(s) • %dx%d @ %dfps", #state.monitorTiles, state.width, state.height, state.fps) or "Waiting for advanced monitors", (#state.monitorTiles > 0) and colors.green or colors.pink)
     drawBoxKeyValue(leftX + 2, leftY + 4, leftW - 4, "Preview", state.showLayoutPreview and "Alignment mode" or "Live rendering", state.showLayoutPreview and colors.lightBlue or colors.lightGray)
     drawBoxKeyValue(leftX + 2, leftY + 5, leftW - 4, "Renderer", gpuText .. " • " .. renderMs, colors.cyan)
-    drawBoxKeyValue(leftX + 2, leftY + 6, leftW - 4, "Runtime", shortPath(state.runtimePath), colors.orange)
+    drawBoxKeyValue(leftX + 2, leftY + 6, leftW - 4, "Credits", joinList(appMeta.credits, "CC: Tweaked"), colors.orange)
 
     ui.drawFrame(rightX, leftY, rightW, leftH, colors.cyan, colors.black, " Identity ", colors.white)
     drawBoxKeyValue(rightX + 2, leftY + 1, rightW - 4, "Tablet", appMeta.tabletName or state.config.title, colors.white)

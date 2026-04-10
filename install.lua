@@ -3,18 +3,6 @@ local APP_NAME = "cc-animator"
 local REPO = "kami-tsuki/cc-animator"
 local BRANCH = "master"
 local MANIFEST_PATH = "manifest.json"
-local RUNTIME_PATH_FILE = ".cc-animator.runtime_path"
-local LOCAL_CORE_PATHS = {
-    ["animated_monitor.lua"] = true,
-    ["startup.lua"] = true,
-    ["update.lua"] = true,
-    ["install.lua"] = true,
-    ["config.json"] = true,
-    ["manifest.json"] = true,
-    ["README.md"] = true,
-    ["LICENSE"] = true,
-    ["lib/animator/bootstrap.lua"] = true,
-}
 
 local function currentDir()
     if shell and shell.dir then
@@ -258,132 +246,6 @@ local function normalizeStringList(items)
     return values, lookup
 end
 
-local function absolutePath(baseDir, path)
-    path = trim(path)
-    if path == "" then
-        return (baseDir ~= "" and baseDir) or "/"
-    end
-    if path:sub(1, 1) == "/" then
-        return path
-    end
-    return (baseDir ~= "" and fs.combine(baseDir, path)) or path
-end
-
-local function samePath(left, right)
-    return absolutePath("/", left or "") == absolutePath("/", right or "")
-end
-
-local function promptYesNo(prompt, defaultYes)
-    write(prompt .. (defaultYes and " [Y/n] " or " [y/N] "))
-    local answer = trim(read() or ""):lower()
-    if answer == "" then
-        return defaultYes or false
-    end
-    return answer == "y" or answer == "yes"
-end
-
-local function detectStorageTargets(appFolder)
-    local candidates = {}
-    local seen = {}
-
-    local function addCandidate(path)
-        path = trim(path)
-        if path == "" or seen[path] then
-            return
-        end
-
-        local parent = fs.getDir(path)
-        if fs.exists(path) then
-            if fs.isDir(path) then
-                seen[path] = true
-                candidates[#candidates + 1] = path
-            end
-            return
-        end
-
-        if parent == "" or fs.exists(parent) then
-            seen[path] = true
-            candidates[#candidates + 1] = path
-        end
-    end
-
-    if peripheral and disk and type(disk.getMountPath) == "function" then
-        for _, name in ipairs(peripheral.getNames()) do
-            if peripheral.getType(name) == "drive" then
-                local ok, mountPath = pcall(disk.getMountPath, name)
-                if ok and mountPath then
-                    addCandidate(mountPath)
-                    addCandidate(fs.combine(mountPath, appFolder))
-                end
-            end
-        end
-    end
-
-    for _, name in ipairs(fs.list("/")) do
-        local rootPath = fs.combine("/", name)
-        if fs.isDir(rootPath) and (name:match("^disk") or name:match("^drive") or name:match("^mnt")) then
-            addCandidate(rootPath)
-            addCandidate(fs.combine(rootPath, appFolder))
-        end
-    end
-
-    table.sort(candidates)
-    return candidates
-end
-
-local function targetPathFor(baseDir, runtimeRoot, relativePath)
-    if samePath(runtimeRoot, baseDir) or LOCAL_CORE_PATHS[relativePath] then
-        return absolutePath(baseDir, relativePath)
-    end
-    return absolutePath(runtimeRoot, relativePath)
-end
-
-local function saveRuntimePath(runtimeRoot, baseDir)
-    local pointerPath = absolutePath(baseDir, RUNTIME_PATH_FILE)
-    if samePath(runtimeRoot, baseDir) then
-        if fs.exists(pointerPath) then
-            fs.delete(pointerPath)
-        end
-        return true
-    end
-
-    return writeBody(pointerPath, absolutePath(baseDir, runtimeRoot) .. "\n")
-end
-
-local function promptRuntimeRoot(baseDir)
-    if not promptYesNo("Store the main runtime on external/shared storage?", false) then
-        return absolutePath(baseDir, "")
-    end
-
-    local candidates = detectStorageTargets(APP_NAME)
-    if #candidates > 0 then
-        print("Detected removable/shared storage paths:")
-        for index, path in ipairs(candidates) do
-            print(string.format("  %d. %s", index, path))
-        end
-    else
-        print("No mounted disk paths were auto-detected; you can still enter a path manually.")
-    end
-
-    local suggested = candidates[1] or fs.combine("/disk", APP_NAME)
-    write("Enter runtime install path [" .. suggested .. "]: ")
-    local entered = trim(read() or "")
-    local runtimeRoot = absolutePath(baseDir, entered ~= "" and entered or suggested)
-
-    if not fs.exists(runtimeRoot) then
-        ensureDir(fs.combine(runtimeRoot, "placeholder"))
-        if not fs.exists(runtimeRoot) then
-            fs.makeDir(runtimeRoot)
-        end
-    end
-
-    if not fs.exists(runtimeRoot) or not fs.isDir(runtimeRoot) then
-        error("Runtime path is not a valid directory: " .. tostring(runtimeRoot))
-    end
-
-    return runtimeRoot
-end
-
 local function isPreservedPath(manifest, path)
     path = trim(path)
     if path == "" then
@@ -480,13 +342,9 @@ if not manifest then
     error("Failed to load install manifest: " .. tostring(manifestErr))
 end
 
-local baseDir = absolutePath(currentDir(), "")
-local runtimeRoot = promptRuntimeRoot(baseDir)
-
 print(APP_NAME)
-print("Installing runtime files into " .. baseDir)
+print("Installing runtime files into " .. currentDir())
 print("Target version: " .. tostring(manifest.version))
-print("Runtime location: " .. tostring(runtimeRoot))
 if manifestSource == "local" then
     print("Remote manifest unavailable, using the existing local manifest.json.")
 end
@@ -495,10 +353,9 @@ print("")
 local failures = {}
 
 for _, path in ipairs(manifest.obsolete) do
-    local targetPath = targetPathFor(baseDir, runtimeRoot, path)
-    if fs.exists(targetPath) and not isPreservedPath(manifest, path) then
-        fs.delete(targetPath)
-        print("Removed obsolete " .. targetPath)
+    if fs.exists(path) and not isPreservedPath(manifest, path) then
+        fs.delete(path)
+        print("Removed obsolete " .. path)
     end
 end
 
@@ -507,14 +364,13 @@ if #manifest.obsolete > 0 then
 end
 
 for _, entry in ipairs(manifest.files) do
-    local targetPath = targetPathFor(baseDir, runtimeRoot, entry.path)
-    if isPreservedPath(manifest, entry.path) and fs.exists(targetPath) then
-        print("Keeping existing " .. targetPath)
+    if isPreservedPath(manifest, entry.path) and fs.exists(entry.path) then
+        print("Keeping existing " .. entry.path)
     else
         write("Downloading " .. entry.path .. " ... ")
         local ok, bodyOrError = readUrl(rawUrl(entry.source, manifest.repo, manifest.branch))
         if ok then
-            local written, writeErr = writeBody(targetPath, bodyOrError)
+            local written, writeErr = writeBody(entry.path, bodyOrError)
             if written then
                 print("ok")
             else
@@ -528,13 +384,6 @@ for _, entry in ipairs(manifest.files) do
     end
 end
 
-if #failures == 0 then
-    local saved, saveErr = saveRuntimePath(runtimeRoot, baseDir)
-    if not saved then
-        failures[#failures + 1] = "runtime path pointer: " .. tostring(saveErr)
-    end
-end
-
 print("")
 if #failures > 0 then
     print("Install finished with errors:")
@@ -545,9 +394,4 @@ if #failures > 0 then
 end
 
 print("Install complete.")
-if samePath(runtimeRoot, baseDir) then
-    print("Runtime is stored locally on this computer.")
-else
-    print("Runtime is stored on external/shared storage at: " .. runtimeRoot)
-end
 print("Run 'startup' or 'animated_monitor' to launch the animator.")

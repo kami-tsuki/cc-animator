@@ -14,7 +14,6 @@ It renders themed real-time effects from `lib/animator/animations/*`, applies pa
 - Built-in UI for animation, theme, layout, and performance control
 - GPU-like adaptive rendering and quality scaling for larger monitor walls
 - `install.lua` / `update.lua` workflow similar to `cc-atm10-music`
-- Optional external disk/shared-storage runtime installs while keeping local launchers on the PC
 - First install fetches `manifest.json` from the repo and then installs the listed runtime files
 
 ---
@@ -41,8 +40,6 @@ The installer will:
 
 - download `manifest.json` first
 - validate the manifest and then download the runtime files
-- ask whether the runtime should stay local or be stored on a floppy/shared disk path
-- keep local launch files on the computer even when the runtime is stored externally
 - create `lib/animator/*`
 - preserve your local `config.json` if it already exists
 - preserve `.animated_monitor_settings`
