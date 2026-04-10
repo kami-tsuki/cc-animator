@@ -5,7 +5,7 @@ local util = require("animator.util")
 local M = {}
 
 M.DEFAULT_REPO = "kami-tsuki/cc-animator"
-M.DEFAULT_BRANCH = "main"
+M.DEFAULT_BRANCH = "master"
 M.DEFAULT_PATH = "manifest.json"
 
 local function hasWildcard(value)

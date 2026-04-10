@@ -13,7 +13,7 @@ It renders themed real-time effects from `lib/animator/animations/*`, applies pa
 - Built-in UI for animation, theme, layout, and performance control
 - GPU-like adaptive rendering and quality scaling for larger monitor walls
 - `install.lua` / `update.lua` workflow similar to `cc-atm10-music`
-- Bootstrap install mode: if a remote `manifest.json` is not present yet, the installer generates a local one automatically
+- First install fetches `manifest.json` from the repo and then installs the listed runtime files
 
 ---
 
@@ -37,11 +37,11 @@ wget run https://raw.githubusercontent.com/kami-tsuki/cc-animator/master/install
 
 The installer will:
 
-- download the runtime files
+- download `manifest.json` first
+- validate the manifest and then download the runtime files
 - create `lib/animator/*`
 - preserve your local `config.json` if it already exists
 - preserve `.animated_monitor_settings`
-- generate a local `manifest.json` automatically if the repo does not have one yet
 
 ### Start the animator
 
