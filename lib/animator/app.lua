@@ -118,6 +118,11 @@ local function makeState(requestedMonitors)
         currentPage = saved.page or "home",
         showLayoutPreview = (saved.showLayoutPreview == nil) and appConfig.showPreviewOnBoot or saved.showLayoutPreview,
         statusMessage = "",
+        lastError = nil,
+        layoutMetrics = {
+            tabBottom = 4,
+            contentTop = 6,
+        },
         settingsLayout = type(saved.layout) == "table" and saved.layout or {},
         runtimeSettings = runtime,
         derivedTuning = {},
@@ -171,9 +176,40 @@ local function makeState(requestedMonitors)
     return state
 end
 
+local function drawErrorScreen(state, title, err)
+    state.lastError = util.trim(err or "unknown error")
+
+    term.setBackgroundColor(colors.black)
+    term.setTextColor(colors.white)
+    term.clear()
+    term.setCursorPos(1, 1)
+
+    local tw, th = term.getSize()
+    if paintutils and paintutils.drawBox then
+        paintutils.drawBox(1, 1, tw, th, colors.red)
+    end
+
+    ui.panelWrite(1, string.rep(" ", tw), colors.white, colors.red)
+    ui.panelCenter(1, title or "Animator error", colors.white, colors.red)
+    ui.panelWrite(2, " Press Q to quit or R to retry.", colors.white, colors.black)
+
+    local lines = util.wrapText(state.lastError, math.max(10, tw - 4))
+    for index = 1, math.min(#lines, math.max(1, th - 4)) do
+        ui.writeAt(2, 2 + index, lines[index], colors.pink, colors.black)
+    end
+end
+
 local function redraw(state, message)
+    if message ~= nil then
+        state.statusMessage = tostring(message)
+    end
+
     renderer.applyTheme(state, themes.get(state.selectedTheme))
-    screens.drawControlPanel(state, animations, themes, message)
+
+    local ok, err = pcall(screens.drawControlPanel, state, animations, themes, state.statusMessage)
+    if not ok then
+        drawErrorScreen(state, "UI render error", err)
+    end
 end
 
 local function setAnimation(state, id, persist)
@@ -469,11 +505,15 @@ function M.run(...)
             local renderCost = 0
             if #state.monitorTiles > 0 then
                 local renderStart = os.clock()
-                renderer.renderFrame(state, animations.get(state.selectedAnimation), time)
+                local ok, renderErr = pcall(renderer.renderFrame, state, animations.get(state.selectedAnimation), time)
                 renderCost = os.clock() - renderStart
 
-                if renderer.updatePerformance(state, renderCost) then
-                    redraw(state, "Adaptive renderer scale changed to x" .. tostring(state.sampleScale or 1) .. ".")
+                if ok then
+                    if renderer.updatePerformance(state, renderCost) then
+                        redraw(state, "Adaptive renderer scale changed to x" .. tostring(state.sampleScale or 1) .. ".")
+                    end
+                else
+                    redraw(state, "Render error: " .. util.truncate(renderErr, 40))
                 end
             end
 
@@ -483,9 +523,13 @@ function M.run(...)
             rescanMonitors(state)
 
         elseif event == "mouse_click" then
-            local result = handleUiAction(state, ui.hitTest(state, p2, p3))
-            if result == "quit" then
-                running = false
+            local ok, result = pcall(handleUiAction, state, ui.hitTest(state, p2, p3))
+            if ok then
+                if result == "quit" then
+                    running = false
+                end
+            else
+                redraw(state, "Input error: " .. util.truncate(result, 40))
             end
 
         elseif event == "mouse_scroll" then

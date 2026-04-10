@@ -20,7 +20,7 @@ function M.panelWrite(y, text, color, background)
     term.setBackgroundColor(background or colors.black)
     term.clearLine()
     term.setTextColor(color or colors.white)
-    term.write(util.fitTextWidth(tostring(text or ""), tw))
+    term.write(util.fitTextWidth(text or "", tw))
 end
 
 function M.panelCenter(y, text, color, background)
@@ -29,7 +29,7 @@ function M.panelCenter(y, text, color, background)
         return
     end
 
-    text = util.fitTextWidth(tostring(text or ""), tw)
+    text = util.fitTextWidth(text or "", tw)
     local x = math.max(1, math.floor((tw - util.textWidth(text)) / 2) + 1)
     term.setCursorPos(x, y)
     term.setBackgroundColor(background or colors.black)
@@ -47,25 +47,28 @@ function M.writeAt(x, y, text, color, background)
     term.setCursorPos(x, y)
     term.setBackgroundColor(background or colors.black)
     term.setTextColor(color or colors.white)
-    term.write(util.fitTextWidth(tostring(text or ""), tw - x + 1))
+    term.write(util.fitTextWidth(text or "", tw - x + 1))
 end
 
 function M.writeRight(y, text, color, background, padding)
     local tw = term.getSize()
-    text = tostring(text or "")
+    text = util.asciiSafe(text or "")
     local x = math.max(1, tw - util.textWidth(text) - (padding or 0) + 1)
     M.writeAt(x, y, text, color, background)
 end
 
 function M.writeWrapped(x, y, width, text, color, background, maxLines)
+    local lines = util.wrapText and util.wrapText(text or "", math.max(1, width)) or { util.truncate(text or "", math.max(1, width)) }
     local lineCount = 0
-    for _, line in ipairs(util.wrapText(text or "", math.max(1, width))) do
+
+    for _, line in ipairs(lines) do
         if maxLines and lineCount >= maxLines then
             break
         end
         M.writeAt(x, y + lineCount, line, color, background)
         lineCount = lineCount + 1
     end
+
     return lineCount
 end
 
@@ -89,7 +92,7 @@ function M.drawFrame(x, y, width, height, border, background, title, titleColor)
     paintutils.drawBox(x, y, x + width - 1, y + height - 1, border or colors.gray)
 
     if title and title ~= "" and width > 4 then
-        local header = " " .. util.fitTextWidth(tostring(title), width - 4) .. " "
+        local header = " " .. util.fitTextWidth(title, width - 4) .. " "
         M.writeAt(x + 2, y, header, titleColor or colors.white, background or colors.black)
     end
 end
@@ -101,7 +104,7 @@ function M.addButton(state, x, y, width, label, background, foreground, action)
     end
 
     local safeWidth = math.max(1, math.min(width, tw - x + 1))
-    local text = util.fitTextWidth(tostring(label or ""), safeWidth)
+    local text = util.fitTextWidth(label or "", safeWidth)
     if util.textWidth(text) < safeWidth then
         text = text .. string.rep(" ", safeWidth - util.textWidth(text))
     end
@@ -146,7 +149,7 @@ function M.drawStatusBar(state, message)
     local _, th = term.getSize()
     local text = state.statusMessage
     if not text or text == "" then
-        text = "Ready • Q quit • R rescan • Tab select monitor"
+        text = "Ready | Q quit | R rescan | Tab select monitor"
     end
 
     M.panelWrite(th, " " .. text, colors.white, colors.gray)

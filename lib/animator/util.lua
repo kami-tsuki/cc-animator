@@ -1,6 +1,17 @@
 ---@diagnostic disable: undefined-global
 local M = {}
 local UTF8_PATTERN = "[%z\1-\127\194-\244][\128-\191]*"
+local ASCII_REPLACEMENTS = {
+    ["•"] = "|",
+    ["—"] = "-",
+    ["–"] = "-",
+    ["…"] = "...",
+    ["×"] = "x",
+    ["→"] = "->",
+    ["←"] = "<-",
+    ["↑"] = "^",
+    ["↓"] = "v",
+}
 
 function M.baseDir()
     if shell and shell.getRunningProgram then
@@ -41,6 +52,16 @@ end
 
 function M.trim(value)
     return (tostring(value or ""):gsub("^%s+", ""):gsub("%s+$", ""))
+end
+
+function M.asciiSafe(value)
+    value = tostring(value or ""):gsub("\r\n", "\n"):gsub("\r", "\n")
+
+    for from, to in pairs(ASCII_REPLACEMENTS) do
+        value = value:gsub(from, to)
+    end
+
+    return (value:gsub("[^\t\r\n -~]", "?"))
 end
 
 function M.deepCopy(value)
@@ -155,7 +176,7 @@ end
 
 function M.textWidth(value)
     local width = 0
-    for _ in tostring(value or ""):gmatch(UTF8_PATTERN) do
+    for _ in M.asciiSafe(value):gmatch(UTF8_PATTERN) do
         width = width + 1
     end
     return width
@@ -168,7 +189,7 @@ function M.fitTextWidth(value, width)
     end
 
     local chars = {}
-    for char in tostring(value or ""):gmatch(UTF8_PATTERN) do
+    for char in M.asciiSafe(value):gmatch(UTF8_PATTERN) do
         chars[#chars + 1] = char
         if #chars >= width then
             break
@@ -179,7 +200,7 @@ function M.fitTextWidth(value, width)
 end
 
 function M.truncate(value, width)
-    value = tostring(value or "")
+    value = M.asciiSafe(value)
     width = math.max(0, tonumber(width) or 0)
     if width == 0 then
         return ""
@@ -191,6 +212,52 @@ function M.truncate(value, width)
         return string.rep(".", width)
     end
     return M.fitTextWidth(value, width - 3) .. "..."
+end
+
+function M.wrapText(value, width)
+    local safeValue = M.asciiSafe(value)
+    width = math.max(1, tonumber(width) or 1)
+    local lines = {}
+
+    for paragraph in (safeValue .. "\n"):gmatch("(.-)\n") do
+        if paragraph == "" then
+            if #lines == 0 or lines[#lines] ~= "" then
+                lines[#lines + 1] = ""
+            end
+        else
+            local current = ""
+            for word in paragraph:gmatch("%S+") do
+                if current == "" then
+                    current = word
+                elseif M.textWidth(current) + 1 + M.textWidth(word) <= width then
+                    current = current .. " " .. word
+                else
+                    if current ~= "" then
+                        lines[#lines + 1] = current
+                    end
+
+                    while M.textWidth(word) > width do
+                        lines[#lines + 1] = M.fitTextWidth(word, width)
+                        word = word:sub(width + 1)
+                    end
+
+                    current = word
+                end
+            end
+
+            if current ~= "" then
+                lines[#lines + 1] = current
+            end
+        end
+    end
+
+    if #lines == 0 then
+        lines[1] = ""
+    elseif lines[#lines] == "" and safeValue:sub(-1) ~= "\n" then
+        lines[#lines] = nil
+    end
+
+    return lines
 end
 
 function M.makeProgressBar(width, ratio, filledGlyph, emptyGlyph)
